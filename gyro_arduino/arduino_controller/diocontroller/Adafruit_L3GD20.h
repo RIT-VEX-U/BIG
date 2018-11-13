@@ -22,7 +22,7 @@
 #else
  #include "WProgram.h"
 #endif
-#include "TinyWireM.h"
+#include "Wire.h"
 
 #define L3GD20_ADDRESS                (0x6B)        // 1101011
 #define L3GD20_POLL_TIMEOUT           (100)         // Maximum number of read attempts
@@ -92,6 +92,7 @@ class Adafruit_L3GD20
   private:
     void write8(l3gd20Registers_t reg, byte value);
     byte read8(l3gd20Registers_t reg);
+    uint8_t SPIxfer(uint8_t x);
     byte address;
     l3gd20Range_t range;
     int8_t _miso, _mosi, _clk, _cs;

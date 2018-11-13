@@ -1,42 +1,87 @@
 #include "Adafruit_L3GD20.h"
 
+#define DATA_OUT 3
+#define DATA_IN 
+#define CLOCK 4
+#define WAVELENGTH 10
+
 Adafruit_L3GD20 gyro;
-void setup() {
-  if(!gyro.begin(gyro.L3DS20_RANGE_250DPS))
-  {
-  }
-  pinMode(1, OUTPUT);
-  //gyro.begin(gyro.L3DS20_RANGE_500DPS)
-  //gyro.begin(gyro.L3DS20_RANGE_2000DPS)
-  
+
+void setup()
+{
+  gyro.begin(gyro.L3DS20_RANGE_250DPS);
+  pinMode(DATA, INPUT);
+  pinMode(CLOCK, INPUT);
 }
 
-int currentZVal = 0;
-int highestVal = 0;
-int lowestVal = 0;
+byte zRegister = 1;
 
-long lastTime = 0;
+//State 1 variables: reading the incoming register
+byte clockState = 0;
+byte bitBuilder[] = {0, 0, 0, 0};
+byte bitIteration = 0;
+byte currentState = 0;
 
-void loop() {
-  gyro.read();
-  //int x_val = (int)gyro.data.x;
-  //int y_val = (int)gyro.data.y;
-  int z_val = (int)gyro.data.z;
+void loop()
+{
+  switch(currentState)
+  {
+    case 0:
+      //When the state of the clock changes, then read the data pin.
+      if(digitalRead(CLOCK) != clockState)
+        {
+          clockState = digitalRead(CLOCK);
+          bitBuilder[bitIteration++] = digitalRead(DATA);
+        }
+        
+        //Once we have read 4 bits, then convert it to decimal and compare to the stored registers.
+        //If it equals a register, move on to the next state. If not, then reset and continue reading for clock changes.
+        if(bitIteration >= 4)
+        {
+          byte nybbleTest = 0;
+          for(byte i = 0; i < 4; i++)
+            nybbleTest += bitBuilder[i] * pow(2, i);
 
-  currentZVal -= z_val;
+          if(nybbleTest == zRegister)
+            currentState++;
+          else
+            bitIteration = 0;
+        }
+    break;
+    case 1:
+      byte outputVal = (byte) (((int)gyro.data.z) * 0.4458041958041958041958041958042) + 127;
+      byte bitBuilder[] = {0, 0, 0, 0, 0, 0, 0, 0};
+      for(byte i = 7; i >= 0; i--)
+      {
+        if(outputVal >= pow(2, i))
+        {
+          outputVal -= pow(2, i);
+          bitBuilder[i] = 1;
+        }
+      }
 
-  if(z_val > highestVal)
-    highestVal = z_val;
-  else if(z_val < lowestVal)
-    lowestVal = z_val;
+      pinMode(DATA, OUTPUT);
+      pinMode(CLOCK, OUTPUT);
+      byte clockState = 0;
 
-  //Serial.println((int) (highestVal * 0.4458041958041958041958041958042));
-  //Serial.println((int) (lowestVal * 0.4458041958041958041958041958042));
+      for(byte i = 0; i < 8; i++)
+      {
+        digitalWrite(CLOCK, abs(--clockState));
+        digitalWrite(DATA, bitBuilder[i]);
+        delay(WAVELENGTH);
+      }
 
-  // z_val right now gives between -286 and 286, and so this dumb number is 255/(2*286).
-  int outputVal = (int) (z_val * 0.4458041958041958041958041958042) + 127;
+      currentState++;
+    break;
+    case 2:
+      for(byte i = 0; i < 4; i++)
+        bitBuilder[i] = 0;
+      bitIteration = 0;
 
-  analogWrite(1, outputVal);
-  
-  //Serial.println(currentZVal / 125.0);
+    pinMode(CLOCK, INPUT);
+    pinMode(DATA, INPUT);
+
+    currentState++;
+    break;   
+  }
 }

@@ -21,6 +21,13 @@
  CONSTRUCTOR
  ***************************************************************************/
 
+Adafruit_L3GD20::Adafruit_L3GD20(int8_t cs, int8_t miso, int8_t mosi, int8_t clk) {
+  _cs = cs;
+  _miso = miso;
+  _mosi = mosi;
+  _clk = clk;
+}
+
 Adafruit_L3GD20::Adafruit_L3GD20(void) {
   // use i2c
   _cs = _mosi = _miso = _clk = -1;
@@ -28,7 +35,16 @@ Adafruit_L3GD20::Adafruit_L3GD20(void) {
 
 bool Adafruit_L3GD20::begin(l3gd20Range_t rng, byte addr)
 {
-  TinyWireM.begin();
+  if (_cs == -1) {
+    Wire.begin();
+  } else {
+    pinMode(_cs, OUTPUT);
+    pinMode(_clk, OUTPUT);
+    pinMode(_mosi, OUTPUT);
+    pinMode(_miso, INPUT);
+    digitalWrite(_cs, HIGH);
+  }
+
   address = addr;
   range = rng;
 
@@ -93,7 +109,7 @@ bool Adafruit_L3GD20::begin(l3gd20Range_t rng, byte addr)
                                   01 = 500 dps
                                   10 = 2000 dps
                                   11 = 2000 dps
-     0  SIM       SPI Mode (0=4-TinyWireM, 1=3-TinyWireM)                       0 */
+     0  SIM       SPI Mode (0=4-wire, 1=3-wire)                       0 */
 
   /* Adjust resolution if requested */
   switch(range)
@@ -133,21 +149,38 @@ void Adafruit_L3GD20::read()
 { 
   uint8_t xhi, xlo, ylo, yhi, zlo, zhi;
 
-    TinyWireM.beginTransmission(address);
+  if (_cs == -1) {
+    Wire.beginTransmission(address);
     // Make sure to set address auto-increment bit
-    TinyWireM.send(L3GD20_REGISTER_OUT_X_L | 0x80);
-    TinyWireM.endTransmission();
-    TinyWireM.requestFrom(address, (byte)6);
+    Wire.write(L3GD20_REGISTER_OUT_X_L | 0x80);
+    Wire.endTransmission();
+    Wire.requestFrom(address, (byte)6);
     
     // Wait around until enough data is available
-    while (TinyWireM.available() < 6);
+    while (Wire.available() < 6);
     
-    xlo = TinyWireM.receive();
-    xhi = TinyWireM.receive();
-    ylo = TinyWireM.receive();
-    yhi = TinyWireM.receive();
-    zlo = TinyWireM.receive();
-    zhi = TinyWireM.receive();
+    xlo = Wire.read();
+    xhi = Wire.read();
+    ylo = Wire.read();
+    yhi = Wire.read();
+    zlo = Wire.read();
+    zhi = Wire.read();
+
+  } else {
+    digitalWrite(_clk, HIGH);
+    digitalWrite(_cs, LOW);
+
+    SPIxfer(L3GD20_REGISTER_OUT_X_L | 0x80 | 0x40); // SPI read, autoincrement
+    delay(10);
+    xlo = SPIxfer(0xFF);
+    xhi = SPIxfer(0xFF);
+    ylo = SPIxfer(0xFF);
+    yhi = SPIxfer(0xFF);
+    zlo = SPIxfer(0xFF);
+    zhi = SPIxfer(0xFF);
+
+    digitalWrite(_cs, HIGH);
+  }
   // Shift values to create properly formed integer (low byte first)
   data.x = (int16_t)(xlo | (xhi << 8));
   data.y = (int16_t)(ylo | (yhi << 8));
@@ -179,23 +212,62 @@ void Adafruit_L3GD20::read()
  ***************************************************************************/
 void Adafruit_L3GD20::write8(l3gd20Registers_t reg, byte value)
 {
+  if (_cs == -1) {
     // use i2c
-    TinyWireM.beginTransmission(address);
-    TinyWireM.send((byte)reg);
-    TinyWireM.send(value);
-    TinyWireM.endTransmission();
+    Wire.beginTransmission(address);
+    Wire.write((byte)reg);
+    Wire.write(value);
+    Wire.endTransmission();
+  } else {
+    digitalWrite(_clk, HIGH);
+    digitalWrite(_cs, LOW);
+
+    SPIxfer(reg);
+    SPIxfer(value);
+
+    digitalWrite(_cs, HIGH);
+  }
 }
 
 byte Adafruit_L3GD20::read8(l3gd20Registers_t reg)
 {
   byte value;
+
+  if (_cs == -1) {
     // use i2c
-    TinyWireM.beginTransmission(address);
-    TinyWireM.send((byte)reg);
-    TinyWireM.endTransmission();
-    TinyWireM.requestFrom(address, (byte)1);
-    value = TinyWireM.receive();
-    TinyWireM.endTransmission();
+    Wire.beginTransmission(address);
+    Wire.write((byte)reg);
+    Wire.endTransmission();
+    Wire.requestFrom(address, (byte)1);
+    value = Wire.read();
+    Wire.endTransmission();
+  } else {
+    digitalWrite(_clk, HIGH);
+    digitalWrite(_cs, LOW);
+
+    SPIxfer((uint8_t)reg | 0x80); // set READ bit
+    value = SPIxfer(0xFF);
+
+    digitalWrite(_cs, HIGH);
+  }
+
+  return value;
+}
+
+uint8_t Adafruit_L3GD20::SPIxfer(uint8_t x) {
+  uint8_t value = 0;
+
+  for (int i=7; i>=0; i--) {
+    digitalWrite(_clk, LOW);
+    if (x & (1<<i)) {
+      digitalWrite(_mosi, HIGH);
+    } else {
+      digitalWrite(_mosi, LOW);
+      }
+    digitalWrite(_clk, HIGH);
+    if (digitalRead(_miso))
+      value |= (1<<i);
+  }
 
   return value;
 }
