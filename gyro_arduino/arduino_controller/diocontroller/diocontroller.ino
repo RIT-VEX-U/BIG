@@ -35,6 +35,7 @@ void loop()
   byte data;
   switch(inputRegister)
   {
+    gyro.read();
     case 1: 
       data = (gyro.data.z * gyro_multiplier) + 127;
     break;

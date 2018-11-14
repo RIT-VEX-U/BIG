@@ -20,7 +20,6 @@ byte registerList[15][4];
 byte sensorList[15];
 byte totalSensors = 0;
 byte totalRegisters = 0;
-byte currentRegister = 0;
 byte incomingByte[] = {0, 0, 0, 0, 0, 0, 0, 0};
 bool currentClockState = false;
 
@@ -28,9 +27,18 @@ task gyro_task()
 {
 	while(true)
 	{
+		SensorValue[clock_out] = true;
+		delay(500);
+		SensorValue[clock_out] = false;
+		delay(500);
+	}
+
+	break;
+	while(true)
+	{
 		//Wait until the data and clock pins are set with initGyro
 		if(data_in == -1 || clock_in == -1 || data_out == -1 || clock_out == -1)
-			break;
+			continue;
 
 		// Fore each sensor, get the value.
 		for(byte sensor = 0; sensor < totalSensors + 1; sensor++)
@@ -41,6 +49,7 @@ task gyro_task()
 				SensorValue[data_out] = registerList[sensor][currentBit];
 				SensorValue[clock_out] = !currentClockState;
 				currentClockState = !currentClockState;
+				delay(500);
 			}
 			//Reset values
 			currentClockState = false;
