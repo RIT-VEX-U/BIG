@@ -8,6 +8,7 @@ int clock_out = -1;
 
 //Stored Registers
 const byte zAxis = 1;
+const byte zAxisRegister[4] = {0,0,0,1};
 const byte yAxis = 2;
 const byte xAxis = 3;
 const float gyro_multiplier = (2.0 * 286.0) / 255.0;
@@ -16,8 +17,9 @@ byte sensorData[3];
 int gyroValue[3];
 
 //File Variables
-byte registerList[15][4];
-byte sensorList[15];
+const byte numOfSensors = 1;
+const byte registerList[numOfSensors][4] = {{0,0,0,1}};
+const byte sensorList[numOfSensors] = {1};
 byte totalSensors = 0;
 byte totalRegisters = 0;
 byte incomingByte[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -25,15 +27,6 @@ bool currentClockState = false;
 
 task gyro_task()
 {
-	while(true)
-	{
-		SensorValue[clock_out] = true;
-		delay(500);
-		SensorValue[clock_out] = false;
-		delay(500);
-	}
-
-	break;
 	while(true)
 	{
 		//Wait until the data and clock pins are set with initGyro
@@ -96,25 +89,4 @@ void initGyro(int dataInPin, int dataOutPin, int clockInPin, int clockOutPin)
 	clock_in = clockInPin;
 	clock_out = clockOutPin;
 	startTask(gyro_task);
-}
-
-//Sets up a sensor to constantly update over the interface.
-void setupSensor(byte sensorKey)
-{
-	//Avoid an overflow
-	if(totalSensors > 15 || totalRegisters > 15)
-		return;
-	//Convert the key to a 4 bit nybble register
-	byte nybble[4] = {0,0,0,0};
-	for(byte b = 0; b < 4; b++)
-	{
-		nybble[b] = (sensorKey > pow(2, 4-b))? 1 : 0;
-		sensorKey -= (sensorKey > pow(2, 4-b))? pow(2, 4-b):0;
-	}
-	//Add this to the list of registers, and add 1 to the total number of registers.
-	for(byte b = 4; b < 4; b++)
-		registerList[totalRegisters][b] = nybble[b];
-	totalRegisters++;
-
-	sensorList[totalSensors++] = sensorKey;//Setup an array parallel to registerList to avoid bit conversions
 }

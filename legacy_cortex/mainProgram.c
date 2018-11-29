@@ -1,7 +1,6 @@
-#pragma config(Sensor, in1,    gyro,           sensorAnalog)
 #pragma config(Sensor, dgtl1,  gyro_data_in,   sensorDigitalIn)
-#pragma config(Sensor, dgtl2,  gyro_clock_in,  sensorDigitalOut)
-#pragma config(Sensor, dgtl3,  gyro_data_out,  sensorDigitalIn)
+#pragma config(Sensor, dgtl2,  gyro_clock_in,  sensorDigitalIn)
+#pragma config(Sensor, dgtl3,  gyro_data_out,  sensorDigitalOut)
 #pragma config(Sensor, dgtl4,  gyro_clock_out, sensorDigitalOut)
 #pragma config(Motor,  port2,           L,             tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           R,             tmotorVex393_MC29, openLoop, reversed)
@@ -115,7 +114,6 @@ writeDebugStreamLine("GyroOut: %f", gyroValue[zAxis]);
 task usercontrol()
 {
 	initGyro(gyro_data_in, gyro_data_out, gyro_clock_in, gyro_clock_out);
-	setupSensor(zAxis);
   // User control code here, inside the loop
   while (true)
   {

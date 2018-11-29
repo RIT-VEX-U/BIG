@@ -16,6 +16,18 @@ void setup()
   pinMode(CLOCK_IN, INPUT);
   pinMode(DATA_OUT, OUTPUT);
   pinMode(DATA_OUT, OUTPUT);
+
+  Serial.begin(9600);
+  /*
+  Serial.begin(9600);
+  while(true)
+  {
+    Serial.print(digitalRead(CLOCK_IN));
+    Serial.print(" ");
+    Serial.println(digitalRead(DATA_IN));
+    delay(50);
+  }
+  */
 }
 
 byte zGyro = 1;
@@ -32,6 +44,9 @@ void loop()
   if(inputRegister == 255)
     return;
 
+  Serial.print("Input Register: ");
+  Serial.println(inputRegister);
+  
   byte data;
   switch(inputRegister)
   {
@@ -69,11 +84,14 @@ byte getInputRegister()
   long currentTime = millis();
   while(currentBit < 4)
   {
-    if(millis() - currentTime > timeout)
-      return 255;
+ //   if(millis() - currentTime > timeout)
+   //   return 255;
       
     if(digitalRead(CLOCK_IN) != clockVal)
     {
+      Serial.print(digitalRead(CLOCK_IN));
+      Serial.print(" ");
+      Serial.println(digitalRead(DATA_IN));
       readBits[currentBit++] = digitalRead(DATA_IN);
       clockVal = !clockVal;
       currentTime = millis();
@@ -96,12 +114,17 @@ void setOutput(byte val)
     {
       val -= pow(2, 7-b);
       digitalWrite(DATA_OUT, true);
+      Serial.print(1);
     }else
     {
+      Serial.print(0);
       digitalWrite(DATA_OUT, false);
     }
+    Serial.print(" ");
     clockVal = !clockVal;
+    Serial.println(clockVal);
     digitalWrite(CLOCK_OUT, clockVal);
+    delay(500);
   }
   digitalWrite(CLOCK_OUT, false);
 }
