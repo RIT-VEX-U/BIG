@@ -1,0 +1,52 @@
+#include "robot-config.h"
+void tankDriveLeft(double power){
+    driveLF.spin(vex::directionType::fwd, power, vex::velocityUnits::rpm);
+    driveLB.spin(vex::directionType::fwd, power, vex::velocityUnits::rpm);
+}
+
+void tankDriveRight(double power){
+    driveRF.spin(vex::directionType::fwd, power, vex::velocityUnits::rpm);
+    driveRB.spin(vex::directionType::fwd, power, vex::velocityUnits::rpm);
+}
+
+void armUp(){
+    armR1.spin(vex::directionType::fwd, 50,vex::velocityUnits::pct);
+    armL1.spin(vex::directionType::fwd, 50,vex::velocityUnits::pct);
+    armR2.spin(vex::directionType::fwd, 50,vex::velocityUnits::pct);
+    armL2.spin(vex::directionType::fwd, 50,vex::velocityUnits::pct);
+}
+
+void armDown(){
+    armR1.spin(vex::directionType::rev, 50,vex::velocityUnits::pct);
+    armL1.spin(vex::directionType::rev, 50,vex::velocityUnits::pct);
+    armR2.spin(vex::directionType::rev, 50,vex::velocityUnits::pct);
+    armL2.spin(vex::directionType::rev, 50,vex::velocityUnits::pct);
+}
+
+void autonomous(){
+    
+}
+
+void usercontrol(){
+    while(true){
+        tankDriveLeft(Controller.Axis2.value());
+        tankDriveRight(Controller.Axis3.value());
+        if(Controller.ButtonR1.pressing()){
+            armUp();
+        }
+        else if(Controller.ButtonR2.pressing()){
+            armDown();
+        }
+        else{
+            armR1.stop();
+            armR2.stop();
+            armL1.stop();
+            armL2.stop();
+        }
+    }
+}
+
+int main() {
+    Competition.autonomous(autonomous);
+    Competition.drivercontrol(usercontrol);
+}
