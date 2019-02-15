@@ -1,14 +1,24 @@
+#ifndef HARDWARE
+#define HARDWARE
+#include "api.h"
 
 using namespace pros;
 
-Motor frontLeftMotor = Motor(12, false);
-Motor backLeftMotor = Motor(11, false);
-Motor frontRightMotor = Motor(14, true);
-Motor backRightMotor = Motor(13, true);
+class Hardware
+{
+public:
+  static Motor frontLeftMotor;
+  static Motor backLeftMotor;
+  static Motor frontRightMotor;
+  static Motor backRightMotor;
 
-Motor upperLeftLiftMotor = Motor(2, true);
-Motor lowerLeftLiftMotor = Motor(1, true);
-Motor upperRightLiftMotor = Motor(4, false);
-Motor lowerRightLiftMotor = Motor(3, false);
+  static Motor upperLeftLiftMotor;
+  static Motor lowerLeftLiftMotor;
+  static Motor upperRightLiftMotor;
+  static Motor lowerRightLiftMotor;
 
-Controller controller1 = Controller(E_CONTROLLER_MASTER);
+  static ADIGyro gyro;
+
+  static Controller controller1;
+};
+#endif
