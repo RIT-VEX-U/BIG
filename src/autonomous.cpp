@@ -1,6 +1,7 @@
 #include "main.h"
 
 #define CLAW_TO_CENTER_DIST 5
+#define AUTO_DRIVE_SPEED .7
 
 enum AutoPath
 {
@@ -37,8 +38,17 @@ void autonomous() {
         currentPath = driveToCap1;
       break;
       case driveToCap1:
-
+        if(driveInches(24 - CLAW_TO_CENTER_DIST, 0, AUTO_DRIVE_SPEED);
+          currentPath = pickupCap1;
       break;
+      case pickupCap1:
+        if(setLiftHeight(4))
+          currentPath = reverseFromCap1;
+        break;
+      case reverseFromCap1:
+        if(driveInches(24 - CLAW_TO_CENTER_DIST, 180, AUTO_DRIVE_SPEED))
+          currentPath = spin1;
+        break;
     }
   }
 }

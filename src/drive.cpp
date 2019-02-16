@@ -129,7 +129,7 @@ bool driveInches(float inches, float direction, float magnitude)
 		return true;
 	}
 
-	driveMecanumRaw(magnitude, direction, 0, false, 0);
+	driveMecanumRaw(magnitude, direction * (3.14159 / 180.0), 0, false, 0);
 
 	return false;
 }
