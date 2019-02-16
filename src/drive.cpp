@@ -1,6 +1,29 @@
 #include "external_functions.h"
 #include "hardware.h"
 
+#define WHEEL_SIZE 4.0
+#define TICKS_PER_REV 900.0
+
+const float inchesPerTick = (WHEEL_SIZE * 3.14159) / TICKS_PER_REV;
+
+int encoderResetVals[] = {0,0,0,0};
+
+void resetEncoders()
+{
+	encoderResetVals[0] = Hardware::frontLeftMotor.get_position();
+	encoderResetVals[1] = Hardware::backLeftMotor.get_position();
+	encoderResetVals[2] = Hardware::frontRightMotor.get_position();
+	encoderResetVals[3] = Hardware::backRightMotor.get_position();
+}
+
+float getAbsValAvgEncVal()
+{
+	return (fabs((Hardware::frontLeftMotor.get_position() - encoderResetVals[0]) * inchesPerTick)
+	 + fabs((Hardware::backLeftMotor.get_position() - encoderResetVals[1]) * inchesPerTick)
+	 + fabs((Hardware::frontRightMotor.get_position() - encoderResetVals[2]) * inchesPerTick)
+	 + fabs((Hardware::backRightMotor.get_position() - encoderResetVals[3]) * inchesPerTick)) / 4.0;
+}
+
 void drive(int leftMotor, int rightMotor)
 {
 	Hardware::frontLeftMotor.move(leftMotor);
@@ -87,4 +110,26 @@ void driveMecanumRaw(float magnitude, float direction, float rotation, bool squa
 		Hardware::backLeftMotor.move(backLeftOut * 127);
 		Hardware::backRightMotor.move(backRightOut * 127);
 
+}
+
+bool driveInchesInit = true;
+
+bool driveInches(float inches, float direction, float magnitude)
+{
+	if(driveInchesInit)
+	{
+		resetEncoders();
+		driveInchesInit = false;
+	}
+
+	if(getAbsValAvgEncVal() > fabs(inches))
+	{
+		drive(0,0);
+		driveInchesInit = true;
+		return true;
+	}
+
+	driveMecanumRaw(magnitude, direction, 0, false, 0);
+
+	return false;
 }

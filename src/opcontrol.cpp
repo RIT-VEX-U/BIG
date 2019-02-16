@@ -26,14 +26,16 @@ void opcontrol()
 	while(true)
 	{
 		//Driving Control
-		driveMecanum(Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_LEFT_Y), Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_LEFT_X),Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_RIGHT_X), true, 0.0);
+		driveMecanum(Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_LEFT_Y),
+     Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_LEFT_X),
+     Hardware::controller1.get_analog(E_CONTROLLER_ANALOG_RIGHT_X), true, 0.0);
 		//End Driving Control
 
 		//Operating Controls
 
     operatorControls(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_L1),
      Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_R1),
-     Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_A));
+   /*Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_A)*/false);
 
 		//End Operating Controls
 
