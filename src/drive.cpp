@@ -133,3 +133,34 @@ bool driveInches(float inches, float direction, float magnitude)
 
 	return false;
 }
+
+bool turnInit = true;
+
+/**
+	turns the robot a certain number of degrees, at a certain speed.
+	Positive degrees is clockwise and negative is counter-clockwise.
+	Speed is between -1.0 ad 1.0
+*/
+bool turn(float degrees, float speed)
+{
+  if(turnInit)
+	{
+		Hardware::gyro.reset();
+		turnInit = false;
+	}
+
+	if(fabs(Hardware::gyro.get_value()) > fabs(degrees))
+	{
+		drive(0,0);
+		turnInit = true;
+		return true;
+	}
+
+	speed = fabs(127 * speed);
+	if(degrees > 0)
+		drive(speed, -speed);
+	else if(degrees < 0)
+		drive(-speed, speed);
+
+	return false;
+}

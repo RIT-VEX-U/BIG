@@ -2,6 +2,7 @@
 
 #define CLAW_TO_CENTER_DIST 5
 #define AUTO_DRIVE_SPEED .7
+#define AUTO_TURN_SPEED .5
 
 enum AutoPath
 {
@@ -26,25 +27,6 @@ AutoPath currentPath = init;
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-
-//turn specified degrees in specified direction
-void turn(double deg, boolean right){
-  while(fabs(Hardware::gyro.get()) < deg*10){
-      if(right){
-        Hardware::frontLeftMotor.move(100);
-      	Hardware::backLeftMotor.move(100);
-      }
-      else{
-        Hardware::frontRightMotor.move(100);
-      	Hardware::backRightMotor.move(100);
-      }
-  }
-  Hardware::frontLeftMotor.move(0);
-  Hardware::backLeftMotor.move(0);
-  Hardware::frontRightMotor.move(0);
-  Hardware::backRightMotor.move(0);
-}
-
 void autonomous() {
 
   while(true)
@@ -68,6 +50,11 @@ void autonomous() {
         if(driveInches(24 - CLAW_TO_CENTER_DIST, 180, AUTO_DRIVE_SPEED))
           currentPath = spin1;
         break;
+      case spin1:
+        if(turn(-180, AUTO_TURN_SPEED))
+          currentPath = strafeToPole2;
+        break;
+      
     }
   }
 }
