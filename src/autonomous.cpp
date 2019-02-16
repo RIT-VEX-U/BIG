@@ -26,6 +26,25 @@ AutoPath currentPath = init;
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+
+//turn specified degrees in specified direction
+void turn(double deg, boolean right){
+  while(fabs(Hardware::gyro.get()) < deg*10){
+      if(right){
+        Hardware::frontLeftMotor.move(100);
+      	Hardware::backLeftMotor.move(100);
+      }
+      else{
+        Hardware::frontRightMotor.move(100);
+      	Hardware::backRightMotor.move(100);
+      }
+  }
+  Hardware::frontLeftMotor.move(0);
+  Hardware::backLeftMotor.move(0);
+  Hardware::frontRightMotor.move(0);
+  Hardware::backRightMotor.move(0);
+}
+
 void autonomous() {
 
   while(true)
