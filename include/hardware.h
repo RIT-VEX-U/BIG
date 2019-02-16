@@ -17,6 +17,11 @@ public:
   static Motor upperRightLiftMotor;
   static Motor lowerRightLiftMotor;
 
+  static Motor firstStageLeftLiftMotor;
+  static Motor firstStageRightLiftMotor;
+
+  static Motor capFlipperMotor;
+
   static ADIGyro gyro;
 
   static Controller controller1;

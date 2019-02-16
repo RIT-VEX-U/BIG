@@ -5,35 +5,6 @@
 using namespace pros;
 
 //====================OPERATING CODE=====================
-void moveLift(float speed)
-{
-	Hardware::upperLeftLiftMotor.move(speed);
-	Hardware::upperRightLiftMotor.move(speed);
-	Hardware::lowerLeftLiftMotor.move(speed);
-	Hardware::lowerRightLiftMotor.move(speed);
-}
-
-float lift_up_speed = 127;
-float lift_down_speed = 80;
-float empty_hold_voltage = 10;
-float full_hold_voltage = 30;
-
-void moveLift(bool button_up, bool button_down)
-{
-	if(button_up)
-	{
-		moveLift(lift_up_speed);
-	}else if(button_down)
-	{
-		moveLift(-lift_down_speed);
-	}else if(Hardware::upperLeftLiftMotor.get_position() > 50)
-	{
-		moveLift(empty_hold_voltage);
-	}else
-	{
-		moveLift(0);
-	}
-}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -60,10 +31,17 @@ void opcontrol()
 
 		//Operating Controls
 
-		moveLift(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_L1), Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_R1));
+    operatorControls(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_L1),
+     Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_R1),
+     Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_A));
 
 		//End Operating Controls
 
+		lcd::print(0, "upper left: %f", Hardware::upperLeftLiftMotor.get_position());
+    lcd::print(1, "upper right: %f", Hardware::upperRightLiftMotor.get_position());
+    lcd::print(2, "lower left: %f", Hardware::lowerLeftLiftMotor.get_position());
+    lcd::print(3, "lower right: %f", Hardware::lowerRightLiftMotor.get_position());
+		delay(50);
 
 	}
 	}
