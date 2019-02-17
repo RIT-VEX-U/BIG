@@ -2,40 +2,39 @@
 #include "hardware.h"
 #include "api.h"
 
-#define FIRST_STAGE_MIN -5
-#define FIRST_STAGE_LOW 0
-#define FIRST_STAGE_HIGH 134
-#define FIRST_STAGE_MAX 140
+#define FIRST_STAGE_MIN 0
+#define FIRST_STAGE_LOW 5
+#define FIRST_STAGE_HIGH 790
+#define FIRST_STAGE_MAX 830
 #define SECOND_STAGE_MIN 0
-#define SECOND_STAGE_LOW 10
-#define SECOND_STAGE_HIGH 1900
-#define SECOND_STAGE_MAX 2000
-#define LIFT_HOLDING_POWER .1
+#define SECOND_STAGE_LOW 5
+#define SECOND_STAGE_HIGH 2000
+#define SECOND_STAGE_MAX 2100
+#define LIFT_HOLDING_POWER_SECOND_STAGE .2
+#define LIFT_HOLDING_POWER_FIRST_STAGE .5
 #define LIFT_HOLDING_DEADBAND 20
 
 #define FIRST_STAGE_SPEED_UP 1
-#define FIRST_STAGE_SPEED_DOWN -.5
+#define FIRST_STAGE_SPEED_DOWN -.1
 
 #define SECOND_STAGE_SPEED_UP 1
 #define SECOND_STAGE_SPEED_DOWN -.5
 
 #define FIRST_STAGE_ANGLE_LOW 5
-#define FIRST_STAGE_ANGLE_HIGH 170
+#define FIRST_STAGE_ANGLE_HIGH 180
 
-#define SECOND_STAGE_ANGLE_LOW 5
-#define SECOND_STAGE_ANGLE_HIGH 170
+#define SECOND_STAGE_ANGLE_LOW 20
+#define SECOND_STAGE_ANGLE_HIGH 155
 
-#define FIRST_STAGE_BAR_LENGTH 10
-#define SECOND_STAGE_BAR_LENGTH 10
+#define FIRST_STAGE_BAR_LENGTH 12
+#define SECOND_STAGE_BAR_LENGTH 12
 
 #define AUTO_LIFT_DEADBAND 1
 
 #define CAP_FLIP_MIN 0
-#define CAP_FLIP_MAX 360
-#define CAP_FLIP_SPEED 1
+#define CAP_FLIP_MAX 450
+#define CAP_FLIP_SPEED .7
 #define CAP_FLIP_MIN_HEIGHT 12
-
-bool isFlippingCap = false;
 
 /**
   Gets the average encoder value of the lift,
@@ -91,55 +90,45 @@ int moveLift(bool buttonUp, bool buttonDown)
   if(buttonUp)
   {
     // FIRST move the 1st stage up
-    if(stage1Avg > FIRST_STAGE_MAX || stage1Avg < FIRST_STAGE_MIN)
+    if(stage1Avg > FIRST_STAGE_MAX)
       moveLift(1, 0);
     else if(stage1Avg < FIRST_STAGE_HIGH)
       moveLift(1, FIRST_STAGE_SPEED_UP);
     else if(stage1Avg < FIRST_STAGE_MAX)
-      moveLift(1, LIFT_HOLDING_POWER);
+      moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
 
     // IF we see the 1st stage is up, THEN start moving the 2nd stage up.
-    if(stage2Avg > SECOND_STAGE_MAX || stage2Avg < SECOND_STAGE_MIN || stage1Avg < FIRST_STAGE_HIGH)
+    if(stage2Avg > SECOND_STAGE_MAX || stage1Avg < FIRST_STAGE_HIGH)
       moveLift(2, 0);
     else if(stage2Avg < SECOND_STAGE_HIGH && stage1Avg >= FIRST_STAGE_HIGH)
       moveLift(2, SECOND_STAGE_SPEED_UP);
     else if(stage2Avg < SECOND_STAGE_MAX)
-      moveLift(2, LIFT_HOLDING_POWER);
+      moveLift(2, LIFT_HOLDING_POWER_SECOND_STAGE * (.5 * (-cos(2*(getLiftAngle(2) * (3.14159 / 180.0))) + 1)));
 
   }else if(buttonDown)
   {
     // FIRST move the 2nd stage down
-    if(stage2Avg <= SECOND_STAGE_MIN || stage2Avg >= SECOND_STAGE_MAX)
+    if(stage2Avg <= SECOND_STAGE_MIN)
       moveLift(2, 0);
     else if(stage2Avg > SECOND_STAGE_LOW)
       moveLift(2, SECOND_STAGE_SPEED_DOWN);
 
     // IF the 2nd stage is down, THEN start moving the 1st stage down.
-    if(stage1Avg < FIRST_STAGE_MIN || stage1Avg > FIRST_STAGE_MAX)
+    if(stage1Avg < FIRST_STAGE_MIN)
       moveLift(1, 0);
     if(stage2Avg > SECOND_STAGE_LOW)
-      moveLift(1, LIFT_HOLDING_POWER);
+      moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
     else if(stage1Avg > FIRST_STAGE_LOW)
       moveLift(1, FIRST_STAGE_SPEED_DOWN);
   }else
   {
-    // IF no input is added, we are keeping it at the height with the
-    // holding power. Also if it's between LOW and the deadband, set to 0.
-    if(stage1Avg > FIRST_STAGE_MAX || stage1Avg < SECOND_STAGE_MAX)
-      moveLift(1, 0);
-    else if(stage1Avg > FIRST_STAGE_LOW + LIFT_HOLDING_DEADBAND)
-      moveLift(1, LIFT_HOLDING_POWER);
-    else
-      moveLift(1, 0);
+    // Uses a sin wave to distribute the power required to keep the lift at that angle.
+    // As the lift reaches 90 degrees, power increases, and as it reaches 180, it decreases.
+    moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
 
     // Same for the 2nd stage.
-    if(stage2Avg > SECOND_STAGE_MAX || stage2Avg < SECOND_STAGE_MIN)
-      moveLift(2, 0);
-    //Gearing difference between stages is about 14.2
-    else if(stage2Avg > SECOND_STAGE_LOW + (14.2 * LIFT_HOLDING_DEADBAND))
-      moveLift(2, LIFT_HOLDING_POWER);
-    else
-      moveLift(2, 0);
+    moveLift(2, LIFT_HOLDING_POWER_SECOND_STAGE * (.5 * (-cos(2*(getLiftAngle(2) * (3.14159 / 180.0))) + 1)));
+
   }
 
   if(stage1Avg < FIRST_STAGE_LOW)
@@ -154,6 +143,21 @@ int moveLift(bool buttonUp, bool buttonDown)
 }
 
 /**
+  Gets the angle of each stage of the lift mechanism, from the vertical axis.
+*/
+float getLiftAngle(int liftStage)
+{
+  if(liftStage == 1)
+    return ((FIRST_STAGE_ANGLE_HIGH - FIRST_STAGE_ANGLE_LOW)
+     * (getAverageEncoderValue(1) / (FIRST_STAGE_MAX - FIRST_STAGE_MIN)))
+     + FIRST_STAGE_ANGLE_LOW;
+  else if(liftStage == 2)
+  return ((SECOND_STAGE_ANGLE_HIGH - SECOND_STAGE_ANGLE_LOW)
+   * (getAverageEncoderValue(2) / (SECOND_STAGE_MAX - SECOND_STAGE_MIN)))
+   + SECOND_STAGE_ANGLE_LOW;
+}
+
+/**
  Gets the height of the lift, in inches using this method:
  1. Use y=mx + b, where y is the height of a stage, m is the range of motion in
     degrees(max angle - min angle), x is the percentage of the lift motion
@@ -161,20 +165,17 @@ int moveLift(bool buttonUp, bool buttonDown)
     minimum amount of degrees. Congrats, you have the angle of that stage.
  2. We are getting the vertical component of this. Normally, to get vertical velocity
     around a circle, we use mag*sin(x). We need position, so we take the integral,
-    which is -cos(x). Fit this to between 0 and 1 by using -.5(cos(x) + 1).
+    which is -cos(x). Fit this to between 0 and 2 by using -(cos(x) + 1), and multiply
+    it by the bar length.
  3. Add the first to the second stage, and poof!
 */
 float getLiftHeight()
 {
-  float stage1Angle = ((FIRST_STAGE_ANGLE_HIGH - FIRST_STAGE_ANGLE_LOW)
-   * (getAverageEncoderValue(1) / (FIRST_STAGE_HIGH - FIRST_STAGE_LOW)))
-   + FIRST_STAGE_ANGLE_LOW;
-  float stage2Angle = ((SECOND_STAGE_ANGLE_HIGH - SECOND_STAGE_ANGLE_LOW)
-   * (getAverageEncoderValue(2) / (SECOND_STAGE_HIGH - SECOND_STAGE_LOW)))
-   + SECOND_STAGE_ANGLE_LOW;
+  float stage1Angle = getLiftAngle(1);
+  float stage2Angle = getLiftAngle(2);
 
-   float stage1Height = FIRST_STAGE_BAR_LENGTH * (-.5 * (cos(stage1Angle * (3.14159 / 180.0)) + 1));
-   float stage2Height = SECOND_STAGE_BAR_LENGTH * (-.5 * (cos(stage2Angle * (3.14159 / 180.0)) + 1));
+  float stage1Height = FIRST_STAGE_BAR_LENGTH * (-cos(stage1Angle * (3.14159 / 180.0)) + 1);
+  float stage2Height = SECOND_STAGE_BAR_LENGTH * (-cos(stage2Angle * (3.14159 / 180.0)) + 1);
 
    return stage1Height + stage2Height;
 }
@@ -201,7 +202,7 @@ bool setLiftHeight(float inches)
   return false;
 }
 
-int flipCapStage = 0;
+int flipCapStage = 4;
 bool capWasOnGround = false;
 /**
   Flips the cap automatically.
@@ -211,6 +212,10 @@ bool capWasOnGround = false;
 bool flipCap(bool button)
 {
   float currentLiftHeight = getLiftHeight();
+
+  if(button)
+    flipCapStage = 0;
+
   switch(flipCapStage)
   {
     case 0:
@@ -229,7 +234,7 @@ bool flipCap(bool button)
     case 2:
       if(!capWasOnGround || setLiftHeight(0))
       {
-        flipCapStage = 0;
+        flipCapStage++;
         return true;
       }
   }
@@ -237,7 +242,7 @@ bool flipCap(bool button)
   return false;
 }
 
-int flipCapDir = 1;
+int flipCapDir = 0;
 /**
   Flips the cap autonomously. First we check if we are closer to the min or max.
   If min, then we will be rotating to the right. If max, rotating to the left.

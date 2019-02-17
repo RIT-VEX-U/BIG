@@ -39,10 +39,17 @@ void opcontrol()
 
 		//End Operating Controls
 
-		lcd::print(0, "upper left: %f", Hardware::upperLeftLiftMotor.get_position());
-    lcd::print(1, "upper right: %f", Hardware::upperRightLiftMotor.get_position());
-    lcd::print(2, "lower left: %f", Hardware::lowerLeftLiftMotor.get_position());
-    lcd::print(3, "lower right: %f", Hardware::lowerRightLiftMotor.get_position());
+		//lcd::print(0, "upper left: %f", Hardware::upperLeftLiftMotor.get_position());
+    //lcd::print(1, "upper right: %f", Hardware::upperRightLiftMotor.get_position());
+    //lcd::print(2, "lower left: %f", Hardware::lowerLeftLiftMotor.get_position());
+    //lcd::print(3, "lower right: %f", Hardware::lowerRightLiftMotor.get_position());
+
+    //lcd::print(0, "left: %f", Hardware::firstStageLeftLiftMotor.get_position());
+    //lcd::print(1, "right: %f", Hardware::firstStageRightLiftMotor.get_position());
+
+    lcd::print(0, "Lift Height: %f", getLiftHeight());
+    lcd::print(1, "left enc: %f", Hardware::firstStageLeftLiftMotor.get_position());
+    lcd::print(2, "left enc: %f", Hardware::firstStageLeftLiftMotor.get_position());
 		delay(50);
 
 	}

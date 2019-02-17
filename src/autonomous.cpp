@@ -1,8 +1,13 @@
 #include "main.h"
+#include "external_functions.h"
 
 #define CLAW_TO_CENTER_DIST 5
-#define AUTO_DRIVE_SPEED .7
+#define AUTO_DRIVE_SPEED_HIGH .7
+#define AUTO_DRIVE_SPEED_LOW .4
 #define AUTO_TURN_SPEED .5
+
+#define LOW_POST_HEIGHT 23
+#define HIGH_POST_HEIGHT 34
 
 enum AutoPath
 {
@@ -39,7 +44,7 @@ void autonomous() {
         currentPath = driveToCap1;
       break;
       case driveToCap1:
-        if(driveInches(24 - CLAW_TO_CENTER_DIST, 0, AUTO_DRIVE_SPEED);
+        if(driveInches(24 - CLAW_TO_CENTER_DIST, 0, AUTO_DRIVE_SPEED_HIGH))
           currentPath = pickupCap1;
       break;
       case pickupCap1:
@@ -47,14 +52,41 @@ void autonomous() {
           currentPath = reverseFromCap1;
         break;
       case reverseFromCap1:
-        if(driveInches(24 - CLAW_TO_CENTER_DIST, 180, AUTO_DRIVE_SPEED))
+        if(driveInches(12 - CLAW_TO_CENTER_DIST, 180, AUTO_DRIVE_SPEED_HIGH))
           currentPath = spin1;
         break;
       case spin1:
         if(turn(-180, AUTO_TURN_SPEED))
-          currentPath = strafeToPole2;
+          currentPath = strafeToPole1;
         break;
-      
+      case strafeToPole1:
+        setLiftHeight(LOW_POST_HEIGHT + 3);
+        if(driveInches(12, 90, AUTO_DRIVE_SPEED_LOW))
+          currentPath = driveToPole1;
+        break;
+      case driveToPole1:
+        setLiftHeight(LOW_POST_HEIGHT + 3);
+        if(driveInches(12 + CLAW_TO_CENTER_DIST, 0, AUTO_DRIVE_SPEED_LOW))
+          currentPath = placeCap1;
+        break;
+      case placeCap1:
+        if(setLiftHeight(LOW_POST_HEIGHT))
+          currentPath = reverseFromPole1;
+        break;
+      case reverseFromPole1:
+        if(driveInches(12, 180, AUTO_DRIVE_SPEED_LOW))
+          currentPath = strafe2;
+        break;
+      case strafe2:
+        setLiftHeight(0);
+        if(driveInches(12, 90, AUTO_DRIVE_SPEED_HIGH))
+          currentPath = spin2;
+        break;
+      case spin2:
+        setLiftHeight(0);
+        if(turn(-180, AUTO_TURN_SPEED))
+          currentPath = driveToCap2;
+        break;
     }
   }
 }

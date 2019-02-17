@@ -157,7 +157,7 @@ bool turn(float degrees, float speed)
 	}
 
 	speed = fabs(127 * speed);
-	if(degrees > 0)
+	if(degrees >= 0)
 		drive(speed, -speed);
 	else if(degrees < 0)
 		drive(-speed, speed);

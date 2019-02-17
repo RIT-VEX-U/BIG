@@ -13,9 +13,12 @@ void driveTank(float left, float right, bool square_inputs);
 void driveMecanum(int leftYJoy, int leftXJoy, int rightXJoy, bool squareInputs, float deadband);
 void driveMecanumRaw(float magnitude, float direction, float rotation, bool squareInputs, float deadband);
 bool driveInches(float inches, float direction, float magnitude);
+bool turn(float degrees, float speed);
+
 
 //Manipulator Code
 float getAverageEncoderValue(int liftStage);
+float getLiftAngle(int liftStage)
 bool setLiftHeight(float inches);
 float getLiftHeight(void);
 int moveLift(bool buttonUp, bool buttonDown);
