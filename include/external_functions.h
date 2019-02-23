@@ -18,11 +18,11 @@ bool turn(float degrees, float speed);
 
 //Manipulator Code
 float getAverageEncoderValue(int liftStage);
-float getLiftAngle(int liftStage)
+float getLiftAngle(int liftStage);
 bool setLiftHeight(float inches);
 float getLiftHeight(void);
 int moveLift(bool buttonUp, bool buttonDown);
-bool flipCap(void);
+void flipCap(void);
 bool flipCap(bool button);
 void operatorControls(bool liftUp, bool liftDown, bool capFlip);
 

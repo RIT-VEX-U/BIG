@@ -1,5 +1,6 @@
 #include "main.h"
 #include "external_functions.h"
+#include "hardware.h"
 
 #define CLAW_TO_CENTER_DIST 5
 #define AUTO_DRIVE_SPEED_HIGH .7
@@ -33,7 +34,8 @@ AutoPath currentPath = init;
  * from where it left off.
  */
 void autonomous() {
-
+  Hardware::punchMotor.move_absolute(1800 + 900, 127);
+  return;
   while(true)
   {
     switch(currentPath)

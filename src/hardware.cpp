@@ -13,8 +13,10 @@ Motor Hardware::lowerLeftLiftMotor = Motor(7, true);
 Motor Hardware::upperRightLiftMotor = Motor(9, false);
 Motor Hardware::lowerRightLiftMotor = Motor(10, false);
 
-Motor Hardware::firstStageLeftLiftMotor = Motor(1, true);
-Motor Hardware::firstStageRightLiftMotor = Motor(4, false);
+Motor Hardware::firstStageLeftLiftMotor = Motor(1, false);
+Motor Hardware::firstStageRightLiftMotor = Motor(4, true);
+
+Motor Hardware::punchMotor = Motor(6, false);
 
 Motor Hardware::capFlipperMotor = Motor(3, false);
 

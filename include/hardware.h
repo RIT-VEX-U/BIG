@@ -20,6 +20,8 @@ public:
   static Motor firstStageLeftLiftMotor;
   static Motor firstStageRightLiftMotor;
 
+  static Motor punchMotor;
+
   static Motor capFlipperMotor;
 
   static ADIGyro gyro;

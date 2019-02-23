@@ -35,7 +35,15 @@ void opcontrol()
 
     operatorControls(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_L1),
      Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_R1),
-   /*Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_A)*/false);
+     Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_A));
+
+     if(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_B))
+      setLiftHeight(32);
+
+      if(Hardware::controller1.get_digital(E_CONTROLLER_DIGITAL_Y))
+        Hardware::punchMotor.move(127);
+      else
+        Hardware::punchMotor.move(0);
 
 		//End Operating Controls
 
@@ -49,7 +57,8 @@ void opcontrol()
 
     lcd::print(0, "Lift Height: %f", getLiftHeight());
     lcd::print(1, "left enc: %f", Hardware::firstStageLeftLiftMotor.get_position());
-    lcd::print(2, "left enc: %f", Hardware::firstStageLeftLiftMotor.get_position());
+    lcd::print(2, "right enc: %f", Hardware::firstStageRightLiftMotor.get_position());
+    lcd::print(3, "flip encoder: %f", Hardware::capFlipperMotor.get_position());
 		delay(50);
 
 	}

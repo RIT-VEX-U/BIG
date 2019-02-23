@@ -4,20 +4,20 @@
 
 #define FIRST_STAGE_MIN 0
 #define FIRST_STAGE_LOW 5
-#define FIRST_STAGE_HIGH 790
+#define FIRST_STAGE_HIGH 820
 #define FIRST_STAGE_MAX 830
 #define SECOND_STAGE_MIN 0
 #define SECOND_STAGE_LOW 5
 #define SECOND_STAGE_HIGH 2000
 #define SECOND_STAGE_MAX 2100
 #define LIFT_HOLDING_POWER_SECOND_STAGE .2
-#define LIFT_HOLDING_POWER_FIRST_STAGE .5
-#define LIFT_HOLDING_DEADBAND 20
+#define LIFT_HOLDING_POWER_FIRST_STAGE .4
+#define LIFT_HOLDING_DEADBAND 50
 
 #define FIRST_STAGE_SPEED_UP 1
-#define FIRST_STAGE_SPEED_DOWN -.1
+#define FIRST_STAGE_SPEED_DOWN -.3
 
-#define SECOND_STAGE_SPEED_UP 1
+#define SECOND_STAGE_SPEED_UP .6
 #define SECOND_STAGE_SPEED_DOWN -.5
 
 #define FIRST_STAGE_ANGLE_LOW 5
@@ -33,7 +33,7 @@
 
 #define CAP_FLIP_MIN 0
 #define CAP_FLIP_MAX 450
-#define CAP_FLIP_SPEED .7
+#define CAP_FLIP_SPEED .4
 #define CAP_FLIP_MIN_HEIGHT 12
 
 /**
@@ -95,7 +95,7 @@ int moveLift(bool buttonUp, bool buttonDown)
     else if(stage1Avg < FIRST_STAGE_HIGH)
       moveLift(1, FIRST_STAGE_SPEED_UP);
     else if(stage1Avg < FIRST_STAGE_MAX)
-      moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
+      moveLift(1, 0);
 
     // IF we see the 1st stage is up, THEN start moving the 2nd stage up.
     if(stage2Avg > SECOND_STAGE_MAX || stage1Avg < FIRST_STAGE_HIGH)
@@ -116,16 +116,19 @@ int moveLift(bool buttonUp, bool buttonDown)
     // IF the 2nd stage is down, THEN start moving the 1st stage down.
     if(stage1Avg < FIRST_STAGE_MIN)
       moveLift(1, 0);
-    if(stage2Avg > SECOND_STAGE_LOW)
-      moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
+    else if(stage2Avg > SECOND_STAGE_LOW)
+      moveLift(1, 0/*LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1))*/);
     else if(stage1Avg > FIRST_STAGE_LOW)
       moveLift(1, FIRST_STAGE_SPEED_DOWN);
   }else
   {
     // Uses a sin wave to distribute the power required to keep the lift at that angle.
     // As the lift reaches 90 degrees, power increases, and as it reaches 180, it decreases.
-    moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * (.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)));
-
+    if(stage1Avg < LIFT_HOLDING_DEADBAND || stage1Avg > FIRST_STAGE_MAX)
+      moveLift(1, 0);
+    else
+      moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * ((.5 * (-cos(2*(getLiftAngle(1) * (3.14159 / 180.0))) + 1)) + .1));
+    //moveLift(1, LIFT_HOLDING_POWER_FIRST_STAGE * 127);
     // Same for the 2nd stage.
     moveLift(2, LIFT_HOLDING_POWER_SECOND_STAGE * (.5 * (-cos(2*(getLiftAngle(2) * (3.14159 / 180.0))) + 1)));
 
@@ -152,9 +155,11 @@ float getLiftAngle(int liftStage)
      * (getAverageEncoderValue(1) / (FIRST_STAGE_MAX - FIRST_STAGE_MIN)))
      + FIRST_STAGE_ANGLE_LOW;
   else if(liftStage == 2)
-  return ((SECOND_STAGE_ANGLE_HIGH - SECOND_STAGE_ANGLE_LOW)
-   * (getAverageEncoderValue(2) / (SECOND_STAGE_MAX - SECOND_STAGE_MIN)))
-   + SECOND_STAGE_ANGLE_LOW;
+    return ((SECOND_STAGE_ANGLE_HIGH - SECOND_STAGE_ANGLE_LOW)
+      * (getAverageEncoderValue(2) / (SECOND_STAGE_MAX - SECOND_STAGE_MIN)))
+      + SECOND_STAGE_ANGLE_LOW;
+
+  return 0;
 }
 
 /**
@@ -204,6 +209,7 @@ bool setLiftHeight(float inches)
 
 int flipCapStage = 4;
 bool capWasOnGround = false;
+bool lastButtonVal = false;
 /**
   Flips the cap automatically.
   If the lift is not above a certain height, raise it, flip and put it down.
@@ -211,10 +217,11 @@ bool capWasOnGround = false;
 */
 bool flipCap(bool button)
 {
-  float currentLiftHeight = getLiftHeight();
-
-  if(button)
+  if(button == lastButtonVal || button == false)
     flipCapStage = 0;
+
+  lastButtonVal = button;
+  float currentLiftHeight = getLiftHeight();
 
   switch(flipCapStage)
   {
@@ -228,12 +235,13 @@ bool flipCap(bool button)
         }
         break;
     case 1:
-      if(flipCap())
-        flipCapStage++;
+      flipCap();
+      flipCapStage++;
       break;
     case 2:
-      if(!capWasOnGround || setLiftHeight(0))
+      if(!capWasOnGround || setLiftHeight(1))
       {
+        capWasOnGround = false;
         flipCapStage++;
         return true;
       }
@@ -249,27 +257,10 @@ int flipCapDir = 0;
   This makes sure that if we are in a weird limbo in the middle, it will sort
   itself out.
 */
-bool flipCap()
+void flipCap()
 {
-  if(flipCapDir == 0)
-  {
-    if(Hardware::capFlipperMotor.get_position() < (CAP_FLIP_MIN + CAP_FLIP_MAX) / 2.0)
-      flipCapDir = 1;
-    else
-      flipCapDir = -1;
-  }
-
-  if((flipCapDir == 1 && Hardware::capFlipperMotor.get_position() >= CAP_FLIP_MAX)
-    || (flipCapDir == -1 && Hardware::capFlipperMotor.get_position() <= CAP_FLIP_MIN))
-    {
-        Hardware::capFlipperMotor.move(0);
-        flipCapDir = 0;
-        return true;
-    }
-
-  Hardware::capFlipperMotor.move(127 * CAP_FLIP_SPEED * flipCapDir);
-
-  return false;
+  flipCapDir = abs(flipCapDir - 1);
+  Hardware::capFlipperMotor.move_absolute(flipCapDir * CAP_FLIP_MAX, CAP_FLIP_SPEED * 127);
 }
 
 /**

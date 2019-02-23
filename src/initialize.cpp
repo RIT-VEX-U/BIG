@@ -1,4 +1,5 @@
 #include "main.h"
+#include "hardware.h"
 
 void on_center_button() {
 	static bool pressed = false;
@@ -21,6 +22,10 @@ void initialize() {
 	pros::lcd::set_text(1, "Hello PROS User!");
 
 	pros::lcd::register_btn1_cb(on_center_button);
+
+	Hardware::capFlipperMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+	Hardware::firstStageLeftLiftMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+	Hardware::firstStageRightLiftMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 }
 
 /**

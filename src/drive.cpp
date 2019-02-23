@@ -6,22 +6,20 @@
 
 const float inchesPerTick = (WHEEL_SIZE * 3.14159) / TICKS_PER_REV;
 
-int encoderResetVals[] = {0,0,0,0};
-
 void resetEncoders()
 {
-	encoderResetVals[0] = Hardware::frontLeftMotor.get_position();
-	encoderResetVals[1] = Hardware::backLeftMotor.get_position();
-	encoderResetVals[2] = Hardware::frontRightMotor.get_position();
-	encoderResetVals[3] = Hardware::backRightMotor.get_position();
+	Hardware::frontLeftMotor.tare_position();
+	Hardware::frontRightMotor.tare_position();
+	Hardware::backLeftMotor.tare_position();
+	Hardware::backRightMotor.tare_position();
 }
 
 float getAbsValAvgEncVal()
 {
-	return (fabs((Hardware::frontLeftMotor.get_position() - encoderResetVals[0]) * inchesPerTick)
-	 + fabs((Hardware::backLeftMotor.get_position() - encoderResetVals[1]) * inchesPerTick)
-	 + fabs((Hardware::frontRightMotor.get_position() - encoderResetVals[2]) * inchesPerTick)
-	 + fabs((Hardware::backRightMotor.get_position() - encoderResetVals[3]) * inchesPerTick)) / 4.0;
+	return (fabs((Hardware::frontLeftMotor.get_position()) * inchesPerTick)
+	 + fabs((Hardware::backLeftMotor.get_position()) * inchesPerTick)
+	 + fabs((Hardware::frontRightMotor.get_position()) * inchesPerTick)
+	 + fabs((Hardware::backRightMotor.get_position()) * inchesPerTick)) / 4.0;
 }
 
 void drive(int leftMotor, int rightMotor)
@@ -114,6 +112,10 @@ void driveMecanumRaw(float magnitude, float direction, float rotation, bool squa
 
 bool driveInchesInit = true;
 
+/**
+	Drives the robot X inches in "degrees" direction, 0 being forward, positive 90
+	to the right, and "magnitude" speed
+*/
 bool driveInches(float inches, float direction, float magnitude)
 {
 	if(driveInchesInit)
@@ -141,15 +143,15 @@ bool turnInit = true;
 	Positive degrees is clockwise and negative is counter-clockwise.
 	Speed is between -1.0 ad 1.0
 */
-bool turn(float degrees, float speed)
+bool turnDegrees(float degrees, float speed)
 {
   if(turnInit)
 	{
-		Hardware::gyro.reset();
+		resetEncoders();
 		turnInit = false;
 	}
 
-	if(fabs(Hardware::gyro.get_value()) > fabs(degrees))
+	if(getAbsValAvgEncVal() >= fabs(degrees * (3.14159/180.0) * 12))
 	{
 		drive(0,0);
 		turnInit = true;
